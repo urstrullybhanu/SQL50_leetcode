@@ -1,0 +1,309 @@
+#Below are the SQl 50 leetcode questions with answers
+
+
+1757. Recyclable and Low Fat Products
+
+select product_id 
+from products
+where low_fats = "Y" and recyclable = "Y"
+
+###################################################
+
+584. Find Customer Referee
+
+select name
+from customer
+where referee_id is null or referee_id <> 2
+
+###################################################
+
+595. Big Countries
+
+select name, population, area
+from world
+where area >= 3000000 or population >= 25000000
+
+###################################################
+
+1148. Article Views I
+
+select distinct author_id as id
+from views
+where  (author_id = viewer_id)  
+order by id
+
+###################################################
+
+1683. Invalid Tweets
+
+select tweet_id
+from tweets
+where length(content)>15
+
+###################################################
+
+1378. Replace Employee ID With The Unique Identifier
+
+select b.unique_id, a.name
+from employees a left join employeeUNI b on b.id = a.id
+
+1068. Product Sales Analysis I
+
+###################################################
+
+select product_name, year, price
+from sales
+left join product on sales.product_id = product.product_id
+
+###################################################
+
+1581. Customer Who Visited but Did Not Make Any Transactions
+
+select V.customer_id, count(V.visit_id) AS count_no_trans
+from Visits V
+left join Transactions T on V.visit_id = T.visit_id
+where T.transaction_id IS NULL
+group by V.customer_id;
+
+###################################################
+
+197. Rising Temperature
+
+select w1.id
+from weather w1 , weather w2
+where datediff(w1.recordDate, w2.recordDate) = 1
+and w1.temperature > w2.temperature
+
+###################################################
+
+1661. Average Time of Process per Machine
+
+select a1.machine_id,round(avg(a2.timestamp - a1.timestamp),3) as processing_time
+from activity a1
+join activity a2 on a1.machine_id = a2.machine_id 
+and a1.process_id = a2.process_id
+and a1.timestamp < a2.timestamp
+group by a1.machine_id
+
+###################################################
+
+577. Employee Bonus
+
+select a.name, b.bonus
+from employee a
+left join bonus b on a.empid = b.empid
+where b.bonus <1000  or b.bonus is null
+
+###################################################
+
+1280. Students and Examinations
+
+select s.student_id, s.student_name, sub.subject_name,
+count(e.subject_name) as attended_exams
+from students s
+cross join subjects sub 
+left join examinations e on e.student_id = s.student_id and sub.subject_name = e.subject_name
+group by s.student_id, s.student_name, sub.subject_name
+order by s.student_id
+
+###################################################
+
+570. Managers with at Least 5 Direct Reports
+
+select e1.name
+from employee e1
+join employee e2 on e1.id = e2.managerid 
+group by e2.managerid
+having count(e2.managerid) >= 5
+
+###################################################
+
+1934. Confirmation Rate
+
+select s.user_id, ifnull(round((count(case when c.action = 'confirmed' then 1 end)/count(c.action)),2),0.00) as confirmation_rate
+from signups s
+left join confirmations c on s.user_id = c.user_id 
+group by s.user_id 
+
+###################################################
+
+620. Not Boring Movies
+
+select id, movie, description, rating 
+from cinema
+where description != "boring" and id%2 != 0
+order by rating desc;
+
+###################################################
+
+1251. Average Selling Price
+
+select p.product_id, ifnull(round(sum(p.price * u.units)/sum(u.units),2),0) as average_price
+from prices p
+left join unitssold u on p.product_id = u.product_id
+and u.purchase_date between p.start_date and p.end_date
+group by product_id
+
+###################################################
+
+1075. Project Employees I
+
+select project_id, round(sum(e.experience_years)/count(p.employee_id),2) as average_years
+from project p
+inner join employee e on e.employee_id = p.employee_id
+group by project_id
+
+###################################################
+
+1633. Percentage of Users Attended a Contest
+
+select contest_id , round(count(distinct user_id)*100/(select count(user_id) from users),2) as percentage
+from register r
+group by r.contest_id
+order by percentage DESC, contest_id
+
+###################################################
+
+1211. Queries Quality and Percentage
+
+select query_name, 
+round(avg(q.rating/q.position),2) as quality,
+round(avg(CASE WHEN rating < 3 THEN 1 ELSE 0 END)*100,2) as poor_query_percentage
+from queries q
+group by query_name
+
+###################################################
+
+1193. Monthly Transactions I
+
+select country, 
+date_format(trans_date, '%Y-%m') as month,
+count(*) as trans_count,
+sum(case when state ='approved' then 1 else 0 end) as approved_count,
+sum(case when state = 'approved' then amount else 0 end) as approved_total_amount,
+sum(case when state = 'approved' then amount else amount end) as trans_total_amount
+-- sum(case when )
+from transactions t
+group by month, country
+
+###################################################
+
+1174. Immediate Food Delivery II
+
+with customers_first_order as 
+ (select *,row_number() over(partition by customer_id order by order_date) as first_order from delivery)
+
+select 
+round(sum(if(order_date=customer_pref_delivery_date,1,0))*100/count(first_order),2) as immediate_percentage
+from customers_first_order
+where customers_first_order.first_order < 2
+
+###################################################
+
+550. Game Play Analysis IV
+
+with players_first_login as
+(
+    select player_id, min(event_date) as event_date from activity group by player_id
+),
+
+players_logged_in as
+(select
+ f1.player_id
+ from players_first_login f1
+ join activity a1 on a1.player_id = f1.player_id
+ where a1.event_date= date_add(f1.event_date, interval 1 day)
+)
+
+select
+round(count(distinct p1.player_id) / (select count(player_id) from players_first_login),2) as fraction
+from players_logged_in p1
+
+###################################################
+
+2356. Number of Unique Subjects Taught by Each Teacher
+
+select teacher_id,count(distinct subject_id) as cnt
+from teacher
+group by teacher_id
+
+###################################################
+
+1141. User Activity for the Past 30 Days I
+
+with cte as
+( 
+select count(distinct user_id) as active_users, activity_date as day
+from activity
+where activity_date between '2019-06-28' AND '2019-07-27'
+group by activity_date
+)
+
+Select * from cte c
+
+
+-- select count(distinct a1.user_id) as active_users, a1.activity_date as day
+-- from activity a1
+-- join activity a2 on a1.user_id = a2.user_id
+-- where a1.activity_date = a2.activity_date
+-- group by a1.activity_date
+
+###################################################
+
+1070. Product Sales Analysis III
+
+select product_id, year as first_year, quantity, price
+from sales
+where (product_id, year) in (select product_id, min(year) from sales group by product_id)
+
+###################################################
+
+596. Classes More Than 5 Students
+
+with count_of_students as (
+    select class, count(student) as head_count from courses
+    group by class
+)
+
+select c1.class from  count_of_students c1
+where c1.head_count >= '5'
+
+###################################################
+
+1729. Find Followers Count
+
+select distinct user_id,count(distinct follower_id) as followers_count
+from followers
+group by user_id order by user_id
+
+###################################################
+
+619. Biggest Single Number
+
+with max_num as (
+select num, count(num) as count_num from mynumbers group by num
+)
+
+select max(num) as num from max_num
+where count_num = 1
+
+###################################################
+
+1045. Customers Who Bought All Products
+
+select customer_id
+from customer
+group by customer_id
+having count(distinct product_key) = (select count(product_key) as counts from product)
+
+###################################################
+
+1731. The Number of Employees Which Report to Each Employee
+
+select e1.employee_id, e1.name,
+count(e2.reports_to) as reports_count,
+round(avg(e2.age)) as average_age
+from employees e1
+join employees e2
+on e1.employee_id = e2.reports_to
+group by e1.employee_id order by e1.employee_id
